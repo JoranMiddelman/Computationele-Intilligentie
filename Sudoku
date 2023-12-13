@@ -66,10 +66,21 @@ namespace practicum1
             return res;
         }
 
-        //static Sudoku HillClimbing()
-        //{
-        //Node huidig = een node maak funtie
-        //
+      /*static Sudoku HillClimbing()
+        {
+            Node huidig = een node maak funtie
+            while(true)
+            {  
+                Node buur = successor functie met de 3 eisen
+                if(buur.Value <= huidig)
+                {
+                    return huidig.State
+                }
+                
+                huidig = buur
+             }
+        }
+        */
 
 
     }
