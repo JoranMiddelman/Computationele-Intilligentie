@@ -1,0 +1,107 @@
+using System.Globalization;
+
+namespace practicum1
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            string input = Console.ReadLine();
+            Sudoku s = new Sudoku(input);
+            Console.WriteLine(s);
+        }
+    }
+
+    class Sudoku
+    {
+        public Vak[,] vakjes;
+
+        public Sudoku(string input)
+        {
+            vakjes = new Vak[9, 9];
+            string[] s = input.Split(' ');
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    vakjes[i, j] = new Vak(int.Parse(s[i * 9 + j + 1])); // + 1 omdat het eerste element "" zal zijn
+                }
+            }
+        }
+
+
+
+        public Vak[] Rij(int x)
+        {
+            Vak[] res = new Vak[9];
+            for (int i = 0; i < 9; i++)
+            {
+                res[i] = vakjes[i, x];
+            }
+            return res;
+        }
+
+        public Vak[] Kolom(int x)
+        {
+            Vak[] res = new Vak[9];
+            for (int i = 0; i < 9; i++)
+            {
+                res[i] = vakjes[x, i];
+            }
+            return res;
+        }
+
+        public override string ToString()
+        {
+            string res = "";
+            for (int i = 0; i < 9; i++)
+            {
+                Vak[] k = Kolom(i);
+                for (int j = 0; j < 9; j++)
+                {
+                    res += k[j].ToString();
+                }
+                res += "\n";
+            }
+            return res;
+        }
+
+        //static Sudoku HillClimbing()
+        //{
+        //Node huidig = een node maak funtie
+        //
+
+
+    }
+ 
+
+    class Vak
+    {
+        public readonly bool vast;
+        public int getal;
+
+        public Vak(int Getal)
+        {
+            this.getal = Getal;
+            this.vast = getal != 0;
+        }
+
+        public override string ToString()
+        {
+            return getal.ToString();
+        }
+    }
+
+    class Node
+    {
+        public Sudoku State { get; }
+        public int Value { get; }
+
+        public Node(Sudoku state, int value)
+        {
+            State = state;
+            Value = value;
+        }
+    }
+
+}
