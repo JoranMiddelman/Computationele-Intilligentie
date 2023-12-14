@@ -81,7 +81,49 @@ namespace practicum1
              }
         }
         */
+        void VulBlokken()
+        {
+            // vakjes[i,j] is een linkerbovenhoek van een blok
+            // VulBlok methode werkt vanaf linkerbovenhoek
+            for (int i = 0; i < 9; i += 3) 
+            {
+                for (int j = 0; j < 9; j += 3)
+                {
+                    VulBlok(i, j);
+                }
+            }
+        }
 
+        void VulBlok(int x, int y)
+        {
+            // vakjes[x,y] is de linkerbovenhoek van het blok dat ingevuld moet worden
+            // Ga vanuit startpunt alle vakjes van het blok af om te kijken welke getallen er al inzitten
+            List<int> getallen = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (vakjes[x + i, y + j].vast)
+                    {
+                        getallen.Remove(vakjes[x + i, y + j].getal); // Verwijder getal van getallen die overbijven
+                    }
+                }
+            }
+            // Vul dan de lege vakjes in met getallen die nog niet gebruikt zijn
+            int index = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (!vakjes[x + i, y + j].vast)
+                    {
+                        vakjes[x + i, y + j].getal = getallen[index];
+                        index++;
+                    }
+                }
+            }
+        }
 
     }
  
