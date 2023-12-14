@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace practicum1
+namespace sudoku
 {
     internal class Program
     {
@@ -15,9 +15,11 @@ namespace practicum1
     class Sudoku
     {
         public Vak[,] vakjes;
+        int evaluatiescore;
 
         public Sudoku(string input)
         {
+            // Parseert inputstring tot een sudoku
             vakjes = new Vak[9, 9];
             string[] s = input.Split(' ');
             for (int y = 0; y < 9; y++)
@@ -27,61 +29,11 @@ namespace practicum1
                     vakjes[x, y] = new Vak(int.Parse(s[y * 9 + x + 1])); // + 1 omdat het eerste element "" zal zijn
                 }
             }
-            VulBlokken();
+            // Bij initialisatie moeten de blokken ingevuld worden en moet de evaluatiescore berekend worden
+            VulBlokken(); 
+            evaluatiescore = Evalueer(); 
         }
 
-
-
-        public Vak[] Rij(int y)
-        {
-            Vak[] res = new Vak[9];
-            for (int i = 0; i < 9; i++)
-            {
-                res[i] = vakjes[i, y];
-            }
-            return res;
-        }
-
-        public Vak[] Kolom(int x)
-        {
-            Vak[] res = new Vak[9];
-            for (int i = 0; i < 9; i++)
-            {
-                res[i] = vakjes[x, i];
-            }
-            return res;
-        }
-
-        public override string ToString()
-        {
-            string res = "";
-            for (int i = 0; i < 9; i++)
-            {
-                Vak[] k = Rij(i);
-                for (int j = 0; j < 9; j++)
-                {
-                    res += k[j].ToString();
-                }
-                res += "\n";
-            }
-            return res;
-        }
-
-      /*static Sudoku HillClimbing()
-        {
-            Node huidig = een node maak funtie
-            while(true)
-            {  
-                Node buur = successor functie met de 3 eisen
-                if(buur.Value <= huidig)
-                {
-                    return huidig.State
-                }
-                
-                huidig = buur
-             }
-        }
-        */
         void VulBlokken()
         {
             // Ga coordinaten van de linkerbovenhoek van alle blokken langs
@@ -96,10 +48,11 @@ namespace practicum1
 
         void VulBlok(int x, int y)
         {
-            // vakjes[x,y] is de linkerbovenhoek van het blok dat ingevuld moet worden
-            // Ga vanuit startpunt alle vakjes van het blok af om te kijken welke getallen er al inzitten
+            // Vult blok met linkerbovenhoek x,y in 
+
             List<int> getallen = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9}; // Lijst houdt overblijvende getallen bij
 
+            // Ga vanuit linkerbovenhoek alle vakjes van het blok af om te kijken welke getallen er al inzitten
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
@@ -125,36 +78,151 @@ namespace practicum1
             }
         }
 
-        void Swaps_In_Blok(int blok_x, int blok_y)
+        public int[] Rij(int y)
         {
-            // Gaat alle mogelijke swaps in blok met als linkerbovenhoek x,y
-            // We willen geen swap 2 keer bekijken, dus we gaan de eerste 8 vakken langs 
-            // Vanuit elk vak worden alleen swaps bekeken met vakken die 'erna' komen
+            // Returnt de getallen in de vakjes in de rij op y-coordinaat y
+            int[] res = new int[9];
+            for (int i = 0; i < 9; i++)
+            {
+                res[i] = vakjes[i, y].getal;
+            }
+            return res;
+        }
+
+        public int[] Kolom(int x)
+        {
+            // Returnt de getallen in de vakjes in de kolom op x-coordinaat x
+            int[] res = new int[9];
+            for (int i = 0; i < 9; i++)
+            {
+                res[i] = vakjes[x, i].getal;
+            }
+            return res;
+        }
+
+        public override string ToString()
+        {
+            string res = "";
+            for (int i = 0; i < 9; i++)
+            {
+                int[] k = Rij(i);
+                for (int j = 0; j < 9; j++)
+                {
+                    res += k[j].ToString();
+                }
+                res += "\n";
+            }
+            return res;
+        }
+
+        /*static Sudoku HillClimbing()
+        {
+            Node huidig = een node maak funtie
+            while(true)
+            {  
+                Node buur = successor functie met de 3 eisen
+                if(buur.Value <= huidig)
+                {
+                    return huidig.State
+                }
+                
+                huidig = buur
+             }
+        }
+        */
+        int Evalueer()
+        {
+            // Evalueert de hele sudoku
+            int score = 0;
+            // Ga alle rijen en kolommen van de sudoku af en tel scores op
+            for (int x = 0; x < 9; x++)
+            {
+                score += 9 - Kolom(x).Distinct().Count();
+            }
+
+            for (int y = 0; y < 9; y++)
+            {
+                score += 9 - Rij(y).Distinct().Count();
+            }
+
+            return score;
+        }
+
+        bool Vind_Beste_Swap(int blok_x, int blok_y)
+        {
+            // Gaat alle mogelijke swaps in blok met als linkerbovenhoek x,y om de beste te vinden
+            // Returnt true als de swap nuttig is, anders false
+            int[] best_swap = new int[4];
+            int best_score = int.MaxValue;
+            // We willen een swap niet 2 keer bekijken, dus we tellen eerst tot 8
             for (int i = 0; i < 8; i++)
             {
                 int a_x = i / 3;
                 int a_y = i % 3;
                 Vak a = vakjes[a_x + blok_x, a_y + blok_y];
+
                 if (a.vast) continue;// Als a een vast vakje is kunnen we hem overslaan
-                // Ga nu alle vakken die 'na' vak a komen langs, dus tel door, deze keer wel tot 9
+
+                // Ga nu alle vakken die 'na' vak a komen langs, dus tel door vanaf a, deze keer wel tot 9
                 for (int j = i + 1; j < 9; j++)
                 {
                     int b_x = j / 3;
                     int b_y = j % 3;
                     Vak b = vakjes[b_x + blok_x, b_y + blok_y];
-                    if (!b.vast)
-                    {
-                        // Er is een mogelijke swap gevonden
+                    if (b.vast) continue; // Als b vast is kunnen we hem overslaan
 
-                        // doe iets
-                        //Console.WriteLine($"Swap {a.getal} {b.getal}");
+                    // Er is een mogelijke swap gevonden
+                    // Evalueer de swap
+                    int swap_score = Evalueer_swap(a_x + blok_x, a_y + blok_y, b_x + blok_x, b_y + blok_y);
+                    // Als dit de beste swap tot nu toe is slaan we hem op
+                    if (swap_score < best_score)
+                    {
+                        best_score = swap_score;
+                        best_swap[0] = a_x; best_swap[1] = a_y; best_swap[2] = b_x; best_swap[3] = b_y;
                     }
                 }
             }
+            // Als de score van de beste swap die we hebben gevonden kleiner dan of gelijk is aan 0 
+            // (kleiner dan 0 betekent dat de swap een positief effect heeft) voeren we hem uit en updaten we de score
+            if (best_score <= 0)
+            {
+                Swap(best_swap[0], best_swap[1], best_swap[2], best_swap[3]);
+                evaluatiescore += best_score;
+                return true; // Swap was nuttig: return true
+            }
+            return false; // Swap was niet nuttig: return false
         }
 
+        void Swap(int a_x, int a_y, int b_x, int b_y)
+        {
+            // Wisselt 2 vakjes om
+            Vak temp = vakjes[a_x, a_y];
+            vakjes[a_x, a_y] = vakjes[b_x, b_y];
+            vakjes[b_x, b_y] = temp;
+        }
+
+        int Evalueer_swap(int a_x, int a_y, int b_x, int b_y)
+        {
+            // Ga alle relevante rijen en kolommen af en tel score op
+            int prescore = 0;
+            prescore += 9 - Rij(a_y).Distinct().Count(); // distinct().Count() geeft het aantal unieke elementen
+            prescore += 9 - Rij(b_y).Distinct().Count();
+            prescore += 9 - Kolom(a_x).Distinct().Count();
+            prescore += 9 - Kolom(a_x).Distinct().Count();
+
+            // Voer dan de swap uit en tel opnieuw de score
+            Swap(a_x, a_y, b_x, b_y);
+            int postscore = 0;
+            postscore += 9 - Rij(a_y).Distinct().Count();
+            postscore += 9 - Rij(b_y).Distinct().Count();
+            postscore += 9 - Kolom(a_x).Distinct().Count();
+            postscore += 9 - Kolom(a_x).Distinct().Count();
+            // Swap weer terug
+            Swap(a_x, a_y, b_x, b_y);
+            // Score van de swap is makkelijk te berekenen
+            return postscore - prescore;
+        }
     }
- 
 
     class Vak
     {
@@ -184,5 +252,4 @@ namespace practicum1
             Value = value;
         }
     }
-
 }
