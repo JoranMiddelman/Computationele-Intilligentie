@@ -20,11 +20,11 @@ namespace practicum1
         {
             vakjes = new Vak[9, 9];
             string[] s = input.Split(' ');
-            for (int i = 0; i < 9; i++)
+            for (int y = 0; y < 9; y++)
             {
-                for (int j = 0; j < 9; j++)
+                for (int x = 0; x < 9; x++)
                 {
-                    vakjes[i, j] = new Vak(int.Parse(s[i * 9 + j + 1])); // + 1 omdat het eerste element "" zal zijn
+                    vakjes[x, y] = new Vak(int.Parse(s[y * 9 + x + 1])); // + 1 omdat het eerste element "" zal zijn
                 }
             }
             VulBlokken();
@@ -32,12 +32,12 @@ namespace practicum1
 
 
 
-        public Vak[] Rij(int x)
+        public Vak[] Rij(int y)
         {
             Vak[] res = new Vak[9];
             for (int i = 0; i < 9; i++)
             {
-                res[i] = vakjes[i, x];
+                res[i] = vakjes[i, y];
             }
             return res;
         }
@@ -57,7 +57,7 @@ namespace practicum1
             string res = "";
             for (int i = 0; i < 9; i++)
             {
-                Vak[] k = Kolom(i);
+                Vak[] k = Rij(i);
                 for (int j = 0; j < 9; j++)
                 {
                     res += k[j].ToString();
@@ -84,13 +84,12 @@ namespace practicum1
         */
         void VulBlokken()
         {
-            // vakjes[i,j] is een linkerbovenhoek van een blok
-            // VulBlok methode werkt vanaf linkerbovenhoek
-            for (int i = 0; i < 9; i += 3) 
+            // Ga coordinaten van de linkerbovenhoek van alle blokken langs
+            for (int x = 0; x < 9; x += 3) 
             {
-                for (int j = 0; j < 9; j += 3)
+                for (int y = 0; y < 9; y += 3)
                 {
-                    VulBlok(i, j);
+                    VulBlok(x, y);
                 }
             }
         }
@@ -99,7 +98,7 @@ namespace practicum1
         {
             // vakjes[x,y] is de linkerbovenhoek van het blok dat ingevuld moet worden
             // Ga vanuit startpunt alle vakjes van het blok af om te kijken welke getallen er al inzitten
-            List<int> getallen = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9};
+            List<int> getallen = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9}; // Lijst houdt overblijvende getallen bij
 
             for (int i = 0; i < 3; i++)
             {
