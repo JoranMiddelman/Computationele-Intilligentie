@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.Intrinsics.X86;
 
 namespace sudoku
 {
@@ -30,8 +31,8 @@ namespace sudoku
                 }
             }
             // Bij initialisatie moeten de blokken ingevuld worden en moet de evaluatiescore berekend worden
-            VulBlokken(); 
-            evaluatiescore = Evalueer(); 
+            VulBlokken();
+            evaluatiescore = Evalueer();
         }
 
         void VulBlokken()
@@ -137,12 +138,12 @@ namespace sudoku
             // Ga alle rijen en kolommen van de sudoku af en tel scores op
             for (int x = 0; x < 9; x++)
             {
-                score += 9 - Kolom(x).Distinct().Count();
+                score += Ontbrekende_Getallen(Kolom(x));
             }
 
             for (int y = 0; y < 9; y++)
             {
-                score += 9 - Rij(y).Distinct().Count();
+                score += Ontbrekende_Getallen(Rij(y));
             }
 
             return score;
@@ -193,6 +194,17 @@ namespace sudoku
             return false; // Swap was niet nuttig: return false
         }
 
+        static int Ontbrekende_Getallen(int[] x)
+        {
+            // Telt het aantal ontbrekende getallen in een rij/kolom
+            int res = 0;
+            for (int i = 1; i < 10; i++)
+            {
+                if (!x.Contains(i)) res++;
+            }
+            return res;
+        }
+
         void Swap(int a_x, int a_y, int b_x, int b_y)
         {
             // Wisselt 2 vakjes om
@@ -205,18 +217,18 @@ namespace sudoku
         {
             // Ga alle relevante rijen en kolommen af en tel score op
             int prescore = 0;
-            prescore += 9 - Rij(a_y).Distinct().Count(); // distinct().Count() geeft het aantal unieke elementen
-            prescore += 9 - Rij(b_y).Distinct().Count();
-            prescore += 9 - Kolom(a_x).Distinct().Count();
-            prescore += 9 - Kolom(a_x).Distinct().Count();
+            prescore += Ontbrekende_Getallen(Rij(a_y));
+            prescore += Ontbrekende_Getallen(Rij(b_y));
+            prescore += Ontbrekende_Getallen(Kolom(a_x));
+            prescore += Ontbrekende_Getallen(Kolom(a_x));
 
             // Voer dan de swap uit en tel opnieuw de score
             Swap(a_x, a_y, b_x, b_y);
             int postscore = 0;
-            postscore += 9 - Rij(a_y).Distinct().Count();
-            postscore += 9 - Rij(b_y).Distinct().Count();
-            postscore += 9 - Kolom(a_x).Distinct().Count();
-            postscore += 9 - Kolom(a_x).Distinct().Count();
+            postscore += Ontbrekende_Getallen(Rij(a_y));
+            postscore += Ontbrekende_Getallen(Rij(b_y));
+            postscore += Ontbrekende_Getallen(Kolom(a_x));
+            postscore += Ontbrekende_Getallen(Kolom(a_x));
             // Swap weer terug
             Swap(a_x, a_y, b_x, b_y);
             // Score van de swap is makkelijk te berekenen
