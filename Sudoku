@@ -27,6 +27,7 @@ namespace practicum1
                     vakjes[i, j] = new Vak(int.Parse(s[i * 9 + j + 1])); // + 1 omdat het eerste element "" zal zijn
                 }
             }
+            VulBlokken();
         }
 
 
