@@ -125,6 +125,34 @@ namespace practicum1
             }
         }
 
+        void Swaps_In_Blok(int blok_x, int blok_y)
+        {
+            // Gaat alle mogelijke swaps in blok met als linkerbovenhoek x,y
+            // We willen geen swap 2 keer bekijken, dus we gaan de eerste 8 vakken langs 
+            // Vanuit elk vak worden alleen swaps bekeken met vakken die 'erna' komen
+            for (int i = 0; i < 8; i++)
+            {
+                int a_x = i / 3;
+                int a_y = i % 3;
+                Vak a = vakjes[a_x + blok_x, a_y + blok_y];
+                if (a.vast) continue;// Als a een vast vakje is kunnen we hem overslaan
+                // Ga nu alle vakken die 'na' vak a komen langs, dus tel door, deze keer wel tot 9
+                for (int j = i + 1; j < 9; j++)
+                {
+                    int b_x = j / 3;
+                    int b_y = j % 3;
+                    Vak b = vakjes[b_x + blok_x, b_y + blok_y];
+                    if (!b.vast)
+                    {
+                        // Er is een mogelijke swap gevonden
+
+                        // doe iets
+                        //Console.WriteLine($"Swap {a.getal} {b.getal}");
+                    }
+                }
+            }
+        }
+
     }
  
 
