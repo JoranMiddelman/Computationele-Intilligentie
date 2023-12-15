@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Intrinsics.X86;
 
@@ -7,90 +9,151 @@ namespace sudoku
     {
         static void Main(string[] args)
         {
+            // Het onderstaande stuk code is gebruikt om data te verzamelen voor de grafieken in het verslag
+            /*
+            bool test = false;
+            if (test) 
+            {
+                string[] sudokus = { " 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0",
+            " 2 0 0 0 8 0 3 0 0 0 6 0 0 7 0 0 8 4 0 3 0 5 0 0 2 0 9 0 0 0 1 0 5 4 0 8 0 0 0 0 0 0 0 0 0 4 0 2 7 0 6 0 0 0 3 0 1 0 0 7 0 4 0 7 2 0 0 4 0 0 6 0 0 0 4 0 1 0 0 0 3",
+            " 0 0 0 0 0 0 9 0 7 0 0 0 4 2 0 1 8 0 0 0 0 7 0 5 0 2 6 1 0 0 9 0 4 0 0 0 0 5 0 0 0 0 0 4 0 0 0 0 5 0 7 0 0 9 9 2 0 1 0 8 0 0 0 0 3 4 0 5 9 0 0 0 5 0 7 0 0 0 0 0 0",
+            " 0 3 0 0 5 0 0 4 0 0 0 8 0 1 0 5 0 0 4 6 0 0 0 0 0 1 2 0 7 0 5 0 2 0 8 0 0 0 0 6 0 3 0 0 0 0 4 0 1 0 9 0 3 0 2 5 0 0 0 0 0 9 8 0 0 1 0 2 0 6 0 0 0 8 0 0 6 0 0 2 0",
+            " 0 2 0 8 1 0 7 4 0 7 0 0 0 0 3 1 0 0 0 9 0 0 0 2 8 0 5 0 0 9 0 4 0 0 8 7 4 0 0 2 0 8 0 0 3 1 6 0 0 3 0 2 0 0 3 0 2 7 0 0 0 6 0 0 0 5 6 0 0 0 0 8 0 7 6 0 5 1 0 9 0" };
+                for (int l = 1; l < 20; l++)
+                {
+                    Console.Write($"Random walk lengte: {l} Tijden: ");
+                    for (int i = 0; i < 5; i++)
+                    {
+                        long tijd = 0;
+                        for (int j = 0; j < 10; j++)
+                        {
+                            Stopwatch s = new Stopwatch();
+                            s.Start();
+                            SudokuSolver solver = new SudokuSolver(new Sudoku(sudokus[i]), l);
+                            s.Stop();
+                            tijd += s.ElapsedMilliseconds;
+                        }
+                        Console.Write($"{tijd / 10}, "); // Gemiddelde tijd 
+                    }
+                    Console.Write("\n");
+                }
+            }
+            */
             string input = Console.ReadLine();
-            Sudoku sudoku = new Sudoku(input);
-            SudokuSolver solver = new SudokuSolver(sudoku);
+            Stopwatch s = new Stopwatch();
+            s.Start();
+            SudokuSolver solver = new SudokuSolver(new Sudoku(input));
+            s.Stop();
+            Console.WriteLine("Solved in " + s.ElapsedMilliseconds + " ms");
         }
     }
 
     class SudokuSolver
     {
-        Sudoku sudoku;
-        int evaluatiescore;
-        Random rnd;
+        private Sudoku sudoku;
+        private int evaluatiescore, total_random_walks;
+        private readonly Random rnd;
+        private readonly int random_walk_lengte = 10; // Lengte van random walk
 
         public SudokuSolver(Sudoku sudoku)
         {
-            this.sudoku = sudoku;
             // Initialisatie
-            Console.WriteLine(sudoku); // Print de ingevoerde sudoku
-            VulBlokken(); // vul blokken 
-            rnd = new Random(); // initialiseer randomiser
-            evaluatiescore = Evalueer(); // Evalueer de hele sudoku om een startscore te hebben
+            this.sudoku = sudoku;
+            total_random_walks = 0;
+            rnd = new Random();
+
+            Console.WriteLine(sudoku);          // Print de ingevoerde sudoku
+            VulBlokken();                       // vul blokken 
+            evaluatiescore = EvalueerSudoku();  // Evalueer de hele sudoku om een startscore te hebben
+
             // Los daarna de sudoku op
             Console.WriteLine("Solving...");
             Solve();
         }
 
-        void Solve()
+        private void Solve()
         {
             // Methode die alles aanstuurt om de sudoku op te lossen
-            int iters_sinds_swap = 0; // Houdt bij hoeveel iteraties sinds de vorige nuttige swap
-            int plateaugrens = 12; // Als deze grens overschreden wordt stagneert het programma
-            int random_walk_lengte = 10; // Aantal keer dat de zoekfunctie wordt uitgevoerd bij een random walk
-            List<(int, int)> gecheckte_blokken = new List<(int, int)>(); // Houdt bij welke blokken er al gecheckt zijn om te voorkomen dat er onnodie checks worden gedaan
-            // Blijf de beste swap vinden en uitvoeren totdat een oplossing gevonden is of tot het programma stagneert
-            while (evaluatiescore != 0 && iters_sinds_swap < plateaugrens)
+            List<int> gecheckte_blokken = new List<int>(9);    // Houdt bij welke blokken er gecheckt zijn sinds laatste nuttige swap
+            // Blijf het oplossings algoritme uitvoeren tot de sudoku is opgelost
+            while (evaluatiescore != 0)
             {
-                // Kies een willekeurig blok uit en vind de beste swap in dat blok
-                int x = rnd.Next(0, 3);
-                int y = rnd.Next(0, 3);
-                // Check of het blok al gecheckt is sinds de laatste swap
-                if (gecheckte_blokken.Contains((x, y))) 
-                { 
-                    iters_sinds_swap++; 
-                    continue; // Dit blok hoeft niet gecheckt te worden
-                } 
-                // Check het blok
-                if (Vind_Beste_Swap(x * 3, y * 3, false))
+                // Kies een willekeurig blok uit
+                int i = rnd.Next(0, 9);
+                // Check of het blok al geweest is en kies een nieuwe uit als dit zo is
+                while (gecheckte_blokken.Contains(i))
                 {
-                    iters_sinds_swap = 0; // Nuttige swap gevonden: iters_sinds_swap op 0
-                    gecheckte_blokken.Clear(); // Leeg de lijst met gecheckte blokken
+                    i = rnd.Next(0, 9);
+                }
+                // Get x en y uit i
+                int x = i / 3;
+                int y = i % 3;
+
+                int best_score = Vind_Beste_Swap(x * 3, y * 3); // Check het blok
+                if (best_score < 0) 
+                {
+                    // Nuttige swap gevonden: leeg de lijst met gecheckte blokken
+                    gecheckte_blokken.Clear(); 
                 }
                 else
                 {
-                    iters_sinds_swap++; // Geen nuttige swap gevonden: iters_sinds_swap met 1 verhogen
-                    gecheckte_blokken.Add((x, y)); // Dit blok is gecheckt 
+                    // Geen nuttige swap gevonden: blok als gecheckt markeren
+                    gecheckte_blokken.Add(i);
+                    if (gecheckte_blokken.Count == 9) // Als alle blokken gecheckt zijn zonder nuttige swap te vinden zitten we op een plateau
+                    {
+                        // Doe een Random walk en reset de lijst met gecheckte blokken
+                        Random_Walk(random_walk_lengte);
+                        gecheckte_blokken.Clear();
+                    }
                 }
             }
-
-            if (evaluatiescore == 0) // We zijn klaar! print de opgeloste sudoku
-            {
-                Console.WriteLine(sudoku);
-            }
-            else
-            {
-                // Het algoritme stagneert: doe een Random walk en probeer daarna opnieuw op te lossen
-                Random_Walk(random_walk_lengte);
-                Solve();
-            }
+            // De loop is afgelopen dus we zijn klaar! print de sudoku
+            Console.WriteLine(sudoku);
         }
 
-        void Random_Walk(int lengte)
+        private void Random_Walk(int lengte)
         {
             // Laat lengte keer de zoekfunctie iets swappen zonder naar de evaluatiescore te kijken
             for (int i = 0; i < lengte; i++)
             {
                 // Doe dit in een willekeurig blok
-                int x = rnd.Next(0, 3);
-                int y = rnd.Next(0, 3);
-                Vind_Beste_Swap(x * 3, y * 3, true);
+                int blok_x = rnd.Next(0, 3) * 3;
+                int blok_y = rnd.Next(0, 3) * 3;
+                Random_Swap(blok_x, blok_y); 
             }
         }
 
-        void VulBlokken()
+        private void Random_Swap(int blok_x, int blok_y)
         {
-            // Vult blokken op (vervangt nullen door toegestane getallen
+            // Voert een willekeurige swap uit in een gegeven blok
+            List<(int, int)> losse_vakken = new List<(int, int)>();
+            // Vind eerst alle niet vaste vakken
+            for (int x = 0; x < 3; x++)
+            {
+                for (int y = 0; y < 3; y++)
+                {
+                    if (!sudoku.vakjes[blok_x + x, blok_y + y].vast)
+                    {
+                        losse_vakken.Add((x, y));
+                    }
+                }
+            }
+            // Kies een willekeurig niet vast vak
+            int index = rnd.Next(0, losse_vakken.Count);
+            (int a_x, int a_y) = losse_vakken[index];
+            losse_vakken.RemoveAt(index);
+            // En nog een
+            index = rnd.Next(0, losse_vakken.Count);
+            (int b_x, int b_y) = losse_vakken[index];
+            losse_vakken.RemoveAt(index);
+            // Update de evaluatiescore en voer de swap tussen de twee vakken uit
+            evaluatiescore += Evalueer_Swap(a_x, a_y, b_x, b_y);
+            Swap(a_x, a_y, b_x, b_y);
+        }
+
+        private void VulBlokken()
+        {
+            // Vult blokken op (vervangt nullen door toegestane getallen)
             // Ga coordinaten van de linkerbovenhoek van alle blokken langs
             for (int blok_x = 0; blok_x < 9; blok_x += 3)
             {
@@ -102,10 +165,9 @@ namespace sudoku
             }
         }
 
-        void VulBlok(int blok_x, int blok_y)
+        private void VulBlok(int blok_x, int blok_y)
         {
             // Vult blok met linkerbovenhoek blok_x,blok_y in 
-
             List<int> getallen = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 }; // Lijst houdt overblijvende getallen bij
 
             // Ga vanuit linkerbovenhoek alle vakjes van het blok af om te kijken welke getallen er al inzitten
@@ -134,7 +196,7 @@ namespace sudoku
             }
         }
 
-        int Evalueer()
+        private int EvalueerSudoku()
         {
             // Evalueert de hele sudoku
             int score = 0;
@@ -148,11 +210,10 @@ namespace sudoku
             return score;
         }
 
-        bool Vind_Beste_Swap(int blok_x, int blok_y, bool ILS)
+        private int Vind_Beste_Swap(int blok_x, int blok_y)
         {
             // Gaat alle mogelijke swaps in blok met als linkerbovenhoek blok_x,blok_y na om de beste te vinden
             // Returnt true als de swap nuttig is, anders false
-            // Wanneer ILS true is zal de methode niet naar evaluatiescores kijken
             int[] best_swap = new int[4];
             int best_score = int.MaxValue;
             // Ga alle mogelijke swaps langs
@@ -174,8 +235,8 @@ namespace sudoku
 
                     if (b.vast) continue; // Als b vast is kunnen we hem ook overslaan
 
-                    // Er is een mogelijke swap gevonden
-                    int swap_score = Evalueer_swap(a_x, a_y, b_x, b_y); // Evalueer de swap
+                    // Er is een mogelijke swap gevonden, evalueer de swap
+                    int swap_score = Evalueer_Swap(a_x, a_y, b_x, b_y); 
                     // Als dit de beste swap tot nu toe is slaan we hem op
                     if (swap_score < best_score)
                     {
@@ -186,17 +247,16 @@ namespace sudoku
             }
             // Als de score van de beste swap die we hebben gevonden kleiner dan of gelijk is aan 0 
             // (kleiner dan 0 betekent dat de swap een positief effect heeft) voeren we hem uit en updaten we de score
-            // Als ILS true is voeren we hem sowieso uit
-            if (best_score <= 0 || ILS)
+            if (best_score <= 0)
             {
                 Swap(best_swap[0], best_swap[1], best_swap[2], best_swap[3]); // Voer swap uit
                 evaluatiescore += best_score; // Update evaluatiescore
-                return true; // Nuttige swap gevonden: return true
+
             }
-            return false; // Geen nuttige swap gevonden: return false
+            return best_score;
         }
 
-        static int Ontbrekende_Getallen(int[] x)
+        private static int Ontbrekende_Getallen(int[] x)
         {
             // Telt het aantal ontbrekende getallen in een rij/kolom
             int res = 0;
@@ -207,7 +267,7 @@ namespace sudoku
             return res;
         }
 
-        void Swap(int a_x, int a_y, int b_x, int b_y)
+        private void Swap(int a_x, int a_y, int b_x, int b_y)
         {
             // Wisselt 2 vakjes om
             Vak temp = sudoku.vakjes[a_x, a_y];
@@ -215,7 +275,7 @@ namespace sudoku
             sudoku.vakjes[b_x, b_y] = temp;
         }
 
-        int Evalueer_swap(int a_x, int a_y, int b_x, int b_y)
+        private int Evalueer_Swap(int a_x, int a_y, int b_x, int b_y)
         {
             // Berekent de invloed die een swap zou hebben op de evaluatiuescore
             // Ga alle relevante rijen en kolommen af en tel scores van deze rijen en kolommen op VOOR de swap
