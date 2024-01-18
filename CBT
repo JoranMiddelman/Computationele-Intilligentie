@@ -63,6 +63,7 @@ namespace sudoku
 
             // Los daarna de sudoku op
             Console.WriteLine("Solving...");
+            Console.WriteLine(sudoku);
             //Solve();
         }
 
@@ -90,10 +91,10 @@ namespace sudoku
             {
                 for (int vak_y = 0; vak_y < 3; vak_y++)
                 {
-                    if (sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].vast)
-                    {
-                        getallen.Remove(sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].getal); // Verwijder getal van getallen die overbijven
-                    }
+                    //if (sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].vast)
+                    //{
+                        //getallen.Remove(sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].getal); // Verwijder getal van getallen die overbijven
+                    //}
                 }
             }
             // Vul dan de lege vakjes in met getallen die nog niet gebruikt zijn
@@ -104,8 +105,8 @@ namespace sudoku
                 {
                     if (!sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].vast) // Leeg vakje
                     {
-                        sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].getal = 0; // Vul het vakje
-                        ; // volgende getal
+                        sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].getal = getallen[index]; // Vul het vakje
+                        index++; // volgende getal
                     }
                 }
             }
