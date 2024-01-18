@@ -1,1 +1,219 @@
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.Intrinsics.X86;
 
+namespace sudoku
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            // Het onderstaande stuk code is gebruikt om data te verzamelen voor de grafieken in het verslag
+            /*
+            bool test = false;
+            if (test) 
+            {
+                string[] sudokus = { " 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0",
+            " 2 0 0 0 8 0 3 0 0 0 6 0 0 7 0 0 8 4 0 3 0 5 0 0 2 0 9 0 0 0 1 0 5 4 0 8 0 0 0 0 0 0 0 0 0 4 0 2 7 0 6 0 0 0 3 0 1 0 0 7 0 4 0 7 2 0 0 4 0 0 6 0 0 0 4 0 1 0 0 0 3",
+            " 0 0 0 0 0 0 9 0 7 0 0 0 4 2 0 1 8 0 0 0 0 7 0 5 0 2 6 1 0 0 9 0 4 0 0 0 0 5 0 0 0 0 0 4 0 0 0 0 5 0 7 0 0 9 9 2 0 1 0 8 0 0 0 0 3 4 0 5 9 0 0 0 5 0 7 0 0 0 0 0 0",
+            " 0 3 0 0 5 0 0 4 0 0 0 8 0 1 0 5 0 0 4 6 0 0 0 0 0 1 2 0 7 0 5 0 2 0 8 0 0 0 0 6 0 3 0 0 0 0 4 0 1 0 9 0 3 0 2 5 0 0 0 0 0 9 8 0 0 1 0 2 0 6 0 0 0 8 0 0 6 0 0 2 0",
+            " 0 2 0 8 1 0 7 4 0 7 0 0 0 0 3 1 0 0 0 9 0 0 0 2 8 0 5 0 0 9 0 4 0 0 8 7 4 0 0 2 0 8 0 0 3 1 6 0 0 3 0 2 0 0 3 0 2 7 0 0 0 6 0 0 0 5 6 0 0 0 0 8 0 7 6 0 5 1 0 9 0" };
+                for (int l = 1; l < 20; l++)
+                {
+                    Console.Write($"Random walk lengte: {l} Tijden: ");
+                    for (int i = 0; i < 5; i++)
+                    {
+                        long tijd = 0;
+                        for (int j = 0; j < 10; j++)
+                        {
+                            Stopwatch s = new Stopwatch();
+                            s.Start();
+                            SudokuSolver solver = new SudokuSolver(new Sudoku(sudokus[i]), l);
+                            s.Stop();
+                            tijd += s.ElapsedMilliseconds;
+                        }
+                        Console.Write($"{tijd / 10}, "); // Gemiddelde tijd 
+                    }
+                    Console.Write("\n");
+                }
+            }
+            */
+            string input = Console.ReadLine();
+            Stopwatch s = new Stopwatch();
+            s.Start();
+            SudokuSolver solver = new SudokuSolver(new Sudoku(input));
+            s.Stop();
+            Console.WriteLine("Solved in " + s.ElapsedMilliseconds + " ms");
+        }
+    }
+
+    class SudokuSolver
+    {
+        private Sudoku sudoku;
+      
+        public SudokuSolver(Sudoku sudoku)
+        {
+            // Initialisatie
+            this.sudoku = sudoku;
+
+            Console.WriteLine(sudoku);          // Print de ingevoerde sudoku
+            VulBlokken();                       // vul blokken 
+             
+
+            // Los daarna de sudoku op
+            Console.WriteLine("Solving...");
+            //Solve();
+        }
+
+        private void VulBlokken()
+        {
+            // Vult blokken op (vervangt nullen door toegestane getallen)
+            // Ga coordinaten van de linkerbovenhoek van alle blokken langs
+            for (int blok_x = 0; blok_x < 9; blok_x += 3)
+            {
+                for (int blok_y = 0; blok_y < 9; blok_y += 3)
+                {
+                    // En vul elk blok
+                    VulBlok(blok_x, blok_y);
+                }
+            }
+        }
+
+        private void VulBlok(int blok_x, int blok_y)
+        {
+            // Vult blok met linkerbovenhoek blok_x,blok_y in 
+            List<int> getallen = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 }; // Lijst houdt overblijvende getallen bij
+
+            // Ga vanuit linkerbovenhoek alle vakjes van het blok af om te kijken welke getallen er al inzitten
+            for (int vak_x = 0; vak_x < 3; vak_x++)
+            {
+                for (int vak_y = 0; vak_y < 3; vak_y++)
+                {
+                    if (sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].vast)
+                    {
+                        getallen.Remove(sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].getal); // Verwijder getal van getallen die overbijven
+                    }
+                }
+            }
+            // Vul dan de lege vakjes in met getallen die nog niet gebruikt zijn
+            int index = 0; // Index zal de lijst met overblijvende getallen doorlopen
+            for (int vak_x = 0; vak_x < 3; vak_x++)
+            {
+                for (int vak_y = 0; vak_y < 3; vak_y++)
+                {
+                    if (!sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].vast) // Leeg vakje
+                    {
+                        sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].getal = 0; // Vul het vakje
+                        ; // volgende getal
+                    }
+                }
+            }
+        }
+
+       
+
+        private static int Ontbrekende_Getallen(int[] x)
+        {
+            // Telt het aantal ontbrekende getallen in een rij/kolom
+            int res = 0;
+            for (int i = 1; i < 10; i++)
+            {
+                if (!x.Contains(i)) res++;
+            }
+            return res;
+        }
+
+        
+    }
+
+    class Sudoku
+    {
+        // Slaat een 9x9 array van vakjes op
+        public Vak[,] vakjes;
+
+        public Sudoku(string input)
+        {
+            // Parseert inputstring tot een sudoku
+            vakjes = new Vak[9, 9];
+            string[] s = input.Split(' ');
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    vakjes[x, y] = new Vak(int.Parse(s[y * 9 + x + 1])); // + 1 omdat het eerste element "" zal zijn
+                }
+            }
+        }
+
+        public int[] Rij(int y)
+        {
+            // Returnt de getallen in de vakjes in de rij op y-coordinaat y
+            int[] res = new int[9];
+            for (int i = 0; i < 9; i++)
+            {
+                res[i] = vakjes[i, y].getal;
+            }
+            return res;
+        }
+
+        public int[] Kolom(int x)
+        {
+            // Returnt de getallen in de vakjes in de kolom op x-coordinaat x
+            int[] res = new int[9];
+            for (int i = 0; i < 9; i++)
+            {
+                res[i] = vakjes[x, i].getal;
+            }
+            return res;
+        }
+
+        public override string ToString()
+        {
+            // "tekent" de sudoku
+            string res = "";
+
+            res += "-------------------------";
+            for (int i = 0; i < 3; i++)
+            {
+                res += "\n";
+                for (int j = 0; j < 3; j++)
+                {
+                    res += "|";
+                    for (int k = 0; k < 3; k++)
+                    {
+                        res += " ";
+                        for (int l = 0; l < 3; l++)
+                        {
+                            int x = (27 * i + 9 * j + 3 * k + 1 * l) / 9;
+                            int y = (27 * i + 9 * j + 3 * k + 1 * l) % 9;
+                            res += vakjes[x, y] + " ";
+                        }
+                        res += "|";
+                    }
+                    res += "\n";
+                }
+                res += "-------------------------";
+            }
+            return res;
+        }
+    }
+
+    class Vak
+    {
+        // Slaat getal op en of het vakje vast is
+        public readonly bool vast;
+        public int getal;
+
+        public Vak(int Getal)
+        {
+            this.getal = Getal;
+            this.vast = getal != 0;
+        }
+
+        public override string ToString()
+        {
+            return getal.ToString();
+        }
+    }
+}
