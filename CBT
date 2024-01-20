@@ -10,7 +10,8 @@ namespace CBT_sudoku
     {
         static void Main(string[] args)
         {
-            Sudoku sudoku = new Sudoku(" 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0");
+            Sudoku sudoku = new Sudoku(" 8 0 0 0 0 0 0 0 0 0 0 3 6 0 0 0 0 0 0 7 0 0 9 0 2 0 0 0 5 0 0 0 7 0 0 0 0 0 0 0 4 5 7 0 0 0 0 0 1 0 0 0 3 0 0 0 1 0 0 0 0 6 8 0 0 8 5 0 0 0 1 0 0 9 0 0 0 0 4 0 0");
+            //Sudoku sudoku = new Sudoku(" 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0");
             Console.WriteLine(sudoku);
             SudokuSolver solver = new SudokuSolver();
             solver.Solve("CBT", sudoku);
@@ -37,7 +38,7 @@ namespace CBT_sudoku
                         break;
 
                     case "FC":
-                        oplosbaar = true;
+                        oplosbaar = ForwardCheckSolve(sudoku);
                         break;
 
                     case "FCMCV":
@@ -73,7 +74,7 @@ namespace CBT_sudoku
             }
 
             // Als het vakje vast is hoeven we hem niet te checken
-            if (sudoku.vakjes[x, y].vast) return BackTrackSolve(x + 1, y, sudoku);
+            if (sudoku.vakjes[x, y] != 0) return BackTrackSolve(x + 1, y, sudoku);
 
             // Check voor alle getallen 1-9 of het getal legaal is in het vakje
             for (int getal = 1; getal < 10; getal++)
@@ -81,24 +82,51 @@ namespace CBT_sudoku
                 if (Legaal(x, y, getal, sudoku))
                 {
                     // Als het getal legaal is vullen we hem in en gaan we verder met zoeken
-                    sudoku.vakjes[x, y].getal = getal;
+                    sudoku.vakjes[x, y] = getal;
                     if (BackTrackSolve(x + 1, y, sudoku)) return true; // Return zorgt ervoor dat we uit de recursie gaan als we klaar zijn
                 }
             }
 
             // Geen oplossing in deze tak: zet vakje weer op 0 en return false (backtrack)
-            sudoku.vakjes[x, y].getal = 0;
+            sudoku.vakjes[x, y] = 0;
+            return false;
+        }
+
+        private static bool ForwardCheckSolve(Sudoku sudoku)
+        {
+            // We moeten per vakje een lijst bijhouden met mogelijke getallen: voor elk vakje 9 bools
+            bool[,,] mogelijke_getallen = new bool[9, 9, 9];
+
+            // Genereer de lijst voor de beginstand
+            for (int x = 0; x < 9; x++)
+            {
+                for (int y  = 0; y < 9; y++)
+                {
+                    if (sudoku.vakjes[x, y] != 0) continue; // Vakje is vast: skip het vakje
+                    else 
+                    {
+                        // Ga alle getallen 1-9 langs en sla legaliteit op in array
+                        for (int getal = 1; getal < 10; getal++)
+                        {
+                            mogelijke_getallen[x, y, getal - 1] = Legaal(x, y, getal, sudoku);
+                        }
+                    }
+                }
+            }
+
+
             return false;
         }
 
         private static bool Legaal(int x, int y, int getal, Sudoku sudoku)
+        // Checkt of getal in vakje x,y van sudoku legaal zou zijn
         {
             // Check rij en kolom
             if (sudoku.Rij(y).Contains(getal)) return false;
             if (sudoku.Kolom(x).Contains(getal)) return false;
 
             // Check het 3x3 vak 
-            // Coordinaten van de linkerbovenhoek van het vak waarin 
+            // Coordinaten van de linkerbovenhoek van het vak 
             int blok_x = x - x % 3;
             int blok_y = y - y % 3;
             // Ga het vak langs vanaf de linkerbovenhoek
@@ -106,7 +134,7 @@ namespace CBT_sudoku
             {
                 for (int j = 0; j < 3; j++)
                 {
-                    if (sudoku.vakjes[blok_x + i, blok_y + j].getal == getal) return false;
+                    if (sudoku.vakjes[blok_x + i, blok_y + j] == getal) return false;
                 }   
             }
             // Legaal
@@ -116,19 +144,19 @@ namespace CBT_sudoku
 
     class Sudoku
     {
-        // Slaat een 9x9 array van vakjes op
-        public Vak[,] vakjes;
+        // Slaat een 9x9 array van getallen op
+        public int[,] vakjes;
 
         public Sudoku(string input)
         {
             // Parseert inputstring tot een sudoku
-            vakjes = new Vak[9, 9];
+            vakjes = new int[9, 9];
             string[] s = input.Split(' ');
             for (int i = 0; i < s.Length - 1; i++) // Eerste element is " ", vandaar - 1
             {
                 int x = i % 9;
                 int y = i / 9;
-                vakjes[x, y] = new Vak(int.Parse(s[i + 1])); // en hier + 1
+                vakjes[x, y] = int.Parse(s[i + 1]); // en hier + 1
             }
         }
 
@@ -138,7 +166,7 @@ namespace CBT_sudoku
             int[] res = new int[9];
             for (int i = 0; i < 9; i++)
             {
-                res[i] = vakjes[i, y].getal;
+                res[i] = vakjes[i, y];
             }
             return res;
         }
@@ -149,7 +177,7 @@ namespace CBT_sudoku
             int[] res = new int[9];
             for (int i = 0; i < 9; i++)
             {
-                res[i] = vakjes[x, i].getal;
+                res[i] = vakjes[x, i];
             }
             return res;
         }
@@ -182,24 +210,6 @@ namespace CBT_sudoku
                 res += "-------------------------";
             }
             return res;
-        }
-    }
-
-    class Vak
-    {
-        // Slaat getal op en of het vakje vast is
-        public readonly bool vast;
-        public int getal;
-
-        public Vak(int Getal)
-        {
-            this.getal = Getal;
-            this.vast = getal != 0;
-        }
-
-        public override string ToString()
-        {
-            return getal.ToString();
         }
     }
 }
