@@ -3,129 +3,115 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Intrinsics.X86;
 
-namespace sudoku
+
+namespace CBT_sudoku
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            // Het onderstaande stuk code is gebruikt om data te verzamelen voor de grafieken in het verslag
-            /*
-            bool test = false;
-            if (test) 
-            {
-                string[] sudokus = { " 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0",
-            " 2 0 0 0 8 0 3 0 0 0 6 0 0 7 0 0 8 4 0 3 0 5 0 0 2 0 9 0 0 0 1 0 5 4 0 8 0 0 0 0 0 0 0 0 0 4 0 2 7 0 6 0 0 0 3 0 1 0 0 7 0 4 0 7 2 0 0 4 0 0 6 0 0 0 4 0 1 0 0 0 3",
-            " 0 0 0 0 0 0 9 0 7 0 0 0 4 2 0 1 8 0 0 0 0 7 0 5 0 2 6 1 0 0 9 0 4 0 0 0 0 5 0 0 0 0 0 4 0 0 0 0 5 0 7 0 0 9 9 2 0 1 0 8 0 0 0 0 3 4 0 5 9 0 0 0 5 0 7 0 0 0 0 0 0",
-            " 0 3 0 0 5 0 0 4 0 0 0 8 0 1 0 5 0 0 4 6 0 0 0 0 0 1 2 0 7 0 5 0 2 0 8 0 0 0 0 6 0 3 0 0 0 0 4 0 1 0 9 0 3 0 2 5 0 0 0 0 0 9 8 0 0 1 0 2 0 6 0 0 0 8 0 0 6 0 0 2 0",
-            " 0 2 0 8 1 0 7 4 0 7 0 0 0 0 3 1 0 0 0 9 0 0 0 2 8 0 5 0 0 9 0 4 0 0 8 7 4 0 0 2 0 8 0 0 3 1 6 0 0 3 0 2 0 0 3 0 2 7 0 0 0 6 0 0 0 5 6 0 0 0 0 8 0 7 6 0 5 1 0 9 0" };
-                for (int l = 1; l < 20; l++)
-                {
-                    Console.Write($"Random walk lengte: {l} Tijden: ");
-                    for (int i = 0; i < 5; i++)
-                    {
-                        long tijd = 0;
-                        for (int j = 0; j < 10; j++)
-                        {
-                            Stopwatch s = new Stopwatch();
-                            s.Start();
-                            SudokuSolver solver = new SudokuSolver(new Sudoku(sudokus[i]), l);
-                            s.Stop();
-                            tijd += s.ElapsedMilliseconds;
-                        }
-                        Console.Write($"{tijd / 10}, "); // Gemiddelde tijd 
-                    }
-                    Console.Write("\n");
-                }
-            }
-            */
-            string input = Console.ReadLine();
-            Stopwatch s = new Stopwatch();
-            s.Start();
-            SudokuSolver solver = new SudokuSolver(new Sudoku(input));
-            s.Stop();
-            Console.WriteLine("Solved in " + s.ElapsedMilliseconds + " ms");
+            Sudoku sudoku = new Sudoku(" 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0");
+            Console.WriteLine(sudoku);
+            SudokuSolver solver = new SudokuSolver();
+            solver.Solve("CBT", sudoku);
         }
     }
 
     class SudokuSolver
     {
-        private Sudoku sudoku;
-      
-        public SudokuSolver(Sudoku sudoku)
+        public void Solve(string methode, Sudoku sudoku)
         {
-            // Initialisatie
-            this.sudoku = sudoku;
-
-            Console.WriteLine(sudoku);          // Print de ingevoerde sudoku
-            VulBlokken();                       // vul blokken 
-             
-
-            // Los daarna de sudoku op
-            Console.WriteLine("Solving...");
-            Console.WriteLine(sudoku);
-            //Solve();
-        }
-
-        private void VulBlokken()
-        {
-            // Vult blokken op (vervangt nullen door toegestane getallen)
-            // Ga coordinaten van de linkerbovenhoek van alle blokken langs
-            for (int blok_x = 0; blok_x < 9; blok_x += 3)
+            // Check of de doorgevoerde methode geldig is
+            if (methode != "CBT" && methode != "FC" && methode != "FCMCV") Console.WriteLine("Voer een geldige methode in");
+            // Als hij geldig is, los de sudoku op met de juiste methode
+            else
             {
-                for (int blok_y = 0; blok_y < 9; blok_y += 3)
+                Stopwatch timer = new Stopwatch();
+                timer.Start();
+                bool oplosbaar = true;
+
+                switch (methode)
                 {
-                    // En vul elk blok
-                    VulBlok(blok_x, blok_y);
+                    case "CBT":
+                        oplosbaar = BackTrackSolve(0, 0, sudoku);
+                        break;
+
+                    case "FC":
+                        oplosbaar = true;
+                        break;
+
+                    case "FCMCV":
+                        oplosbaar = false;
+                        break;
+                }
+
+                timer.Stop();
+                // Print het resulaat
+                if (oplosbaar)
+                {
+                    Console.WriteLine(sudoku);
+                    Console.WriteLine($"Opgelost in {timer.ElapsedMilliseconds} ms");
+                }
+                else
+                {
+                    Console.WriteLine("geen oplossing");
                 }
             }
         }
 
-        private void VulBlok(int blok_x, int blok_y)
+        private static bool BackTrackSolve(int x, int y, Sudoku sudoku)
         {
-            // Vult blok met linkerbovenhoek blok_x,blok_y in 
-            List<int> getallen = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9 }; // Lijst houdt overblijvende getallen bij
-
-            // Ga vanuit linkerbovenhoek alle vakjes van het blok af om te kijken welke getallen er al inzitten
-            for (int vak_x = 0; vak_x < 3; vak_x++)
+            // Check of we voorbij het einde van de rij zijn
+            if (x == 9)
             {
-                for (int vak_y = 0; vak_y < 3; vak_y++)
+                // Check of we bij het einde van de sudoku zijn, dus of we klaar zijn
+                if (y == 8) return true;
+
+                // Anders naar volgende rij gaan
+                y++;
+                x = 0;
+            }
+
+            // Als het vakje vast is hoeven we hem niet te checken
+            if (sudoku.vakjes[x, y].vast) return BackTrackSolve(x + 1, y, sudoku);
+
+            // Check voor alle getallen 1-9 of het getal legaal is in het vakje
+            for (int getal = 1; getal < 10; getal++)
+            {
+                if (Legaal(x, y, getal, sudoku))
                 {
-                    //if (sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].vast)
-                    //{
-                        //getallen.Remove(sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].getal); // Verwijder getal van getallen die overbijven
-                    //}
+                    // Als het getal legaal is vullen we hem in en gaan we verder met zoeken
+                    sudoku.vakjes[x, y].getal = getal;
+                    if (BackTrackSolve(x + 1, y, sudoku)) return true; // Return zorgt ervoor dat we uit de recursie gaan als we klaar zijn
                 }
             }
-            // Vul dan de lege vakjes in met getallen die nog niet gebruikt zijn
-            int index = 0; // Index zal de lijst met overblijvende getallen doorlopen
-            for (int vak_x = 0; vak_x < 3; vak_x++)
-            {
-                for (int vak_y = 0; vak_y < 3; vak_y++)
-                {
-                    if (!sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].vast) // Leeg vakje
-                    {
-                        sudoku.vakjes[blok_x + vak_x, blok_y + vak_y].getal = getallen[index]; // Vul het vakje
-                        index++; // volgende getal
-                    }
-                }
-            }
+
+            // Geen oplossing in deze tak: zet vakje weer op 0 en return false (backtrack)
+            sudoku.vakjes[x, y].getal = 0;
+            return false;
         }
 
-       
-
-        private static int Ontbrekende_Getallen(int[] x)
+        private static bool Legaal(int x, int y, int getal, Sudoku sudoku)
         {
-            // Telt het aantal ontbrekende getallen in een rij/kolom
-            int res = 0;
-            for (int i = 1; i < 10; i++)
-            {
-                if (!x.Contains(i)) res++;
-            }
-            return res;
-        }
+            // Check rij en kolom
+            if (sudoku.Rij(y).Contains(getal)) return false;
+            if (sudoku.Kolom(x).Contains(getal)) return false;
 
-        
+            // Check het 3x3 vak 
+            // Coordinaten van de linkerbovenhoek van het vak waarin 
+            int blok_x = x - x % 3;
+            int blok_y = y - y % 3;
+            // Ga het vak langs vanaf de linkerbovenhoek
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (sudoku.vakjes[blok_x + i, blok_y + j].getal == getal) return false;
+                }   
+            }
+            // Legaal
+            return true;
+        }
     }
 
     class Sudoku
@@ -138,12 +124,11 @@ namespace sudoku
             // Parseert inputstring tot een sudoku
             vakjes = new Vak[9, 9];
             string[] s = input.Split(' ');
-            for (int y = 0; y < 9; y++)
+            for (int i = 0; i < s.Length - 1; i++) // Eerste element is " ", vandaar - 1
             {
-                for (int x = 0; x < 9; x++)
-                {
-                    vakjes[x, y] = new Vak(int.Parse(s[y * 9 + x + 1])); // + 1 omdat het eerste element "" zal zijn
-                }
+                int x = i % 9;
+                int y = i / 9;
+                vakjes[x, y] = new Vak(int.Parse(s[i + 1])); // en hier + 1
             }
         }
 
@@ -186,8 +171,8 @@ namespace sudoku
                         res += " ";
                         for (int l = 0; l < 3; l++)
                         {
-                            int x = (27 * i + 9 * j + 3 * k + 1 * l) / 9;
-                            int y = (27 * i + 9 * j + 3 * k + 1 * l) % 9;
+                            int x = (27 * i + 9 * j + 3 * k + 1 * l) % 9;
+                            int y = (27 * i + 9 * j + 3 * k + 1 * l) / 9;
                             res += vakjes[x, y] + " ";
                         }
                         res += "|";
