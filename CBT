@@ -14,7 +14,7 @@ namespace CBT_sudoku
             //Sudoku sudoku = new Sudoku(" 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0");
             Console.WriteLine(sudoku);
             SudokuSolver solver = new SudokuSolver();
-            solver.Solve("CBT", sudoku);
+            solver.Solve("FC", sudoku);
         }
     }
 
@@ -100,10 +100,10 @@ namespace CBT_sudoku
             // Genereer de lijst voor de beginstand
             for (int x = 0; x < 9; x++)
             {
-                for (int y  = 0; y < 9; y++)
+                for (int y = 0; y < 9; y++)
                 {
                     if (sudoku.vakjes[x, y] != 0) continue; // Vakje is vast: skip het vakje
-                    else 
+                    else
                     {
                         // Ga alle getallen 1-9 langs en sla legaliteit op in array
                         for (int getal = 1; getal < 10; getal++)
@@ -114,8 +114,100 @@ namespace CBT_sudoku
                 }
             }
 
+            for (int x = 0; x < 9; x++)
+            {
+                for (int y = 0; y < 9; y++)
+                {
+                    if (sudoku.vakjes[x, y] != 0) continue; // Vakje is vast: skip het vakje
+                    else
+                    {
+                        // Kiest het laagst mogelijke cijfer
+                        for (int getal = 1; getal < 10; getal++)
+                        {
 
-            return false;
+                            if (mogelijke_getallen[x, y, getal - 1] == true)
+                            {
+                                sudoku.vakjes[x, y] = getal;
+                                //updaten van de mogelijke getallen lijst na het invullen van het vakje
+                                mogelijke_getallen = updateMG(sudoku, mogelijke_getallen);
+
+                                if (check(mogelijke_getallen, sudoku) == true)
+                                {
+                                    break;
+                                }
+
+                                else
+                                {
+                                    // als een vakje geen mogelijkheden meer heeft door naar het volgende mogelijke getal
+                                    continue;
+                                }
+
+
+
+
+
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+
+        }
+
+        private static bool check(bool[,,] mogelijke_getallen, Sudoku sudoku)
+        {
+            for (int x = 0; x < 9; x++)
+            {
+                for (int y = 0; y < 9; y++)
+                {
+                    if (sudoku.vakjes[x, y] != 0) continue; // Vakje is vast: skip het vakje
+                    else
+                    {
+                        //check of het vakje na de update nog mogelijke getallen bevat
+                        int i = 0;
+                        for (int getal = 1; getal < 10; getal++)
+                        {
+                            if (mogelijke_getallen[x, y, getal - 1] == false)
+                            {
+                                i++;
+                            }
+
+                            if (i == 9)
+                            {
+                                return false;
+                            }
+
+
+
+                        }
+                    }
+                }
+            }
+            return true;
+
+        }
+
+        private static bool[,,] updateMG(Sudoku sudoku, bool[,,] mogelijke_getallen)
+        {
+
+            for (int x = 0; x < 9; x++)
+            {
+                for (int y = 0; y < 9; y++)
+                {
+                    if (sudoku.vakjes[x, y] != 0) continue; // Vakje is vast: skip het vakje
+                    else
+                    {
+                        // Ga alle getallen 1-9 langs en sla legaliteit op in array
+                        for (int getal = 1; getal < 10; getal++)
+                        {
+                            mogelijke_getallen[x, y, getal - 1] = Legaal(x, y, getal, sudoku);
+
+                        }
+                    }
+                }
+            }
+            return mogelijke_getallen;
         }
 
         private static bool Legaal(int x, int y, int getal, Sudoku sudoku)
@@ -135,7 +227,7 @@ namespace CBT_sudoku
                 for (int j = 0; j < 3; j++)
                 {
                     if (sudoku.vakjes[blok_x + i, blok_y + j] == getal) return false;
-                }   
+                }
             }
             // Legaal
             return true;
@@ -213,3 +305,4 @@ namespace CBT_sudoku
         }
     }
 }
+
