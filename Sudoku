@@ -10,10 +10,15 @@ namespace CBT_sudoku
     {
         static void Main(string[] args)
         {
-            //Sudoku sudoku = new Sudoku(" 8 0 0 0 0 0 0 0 0 0 0 3 6 0 0 0 0 0 0 7 0 0 9 0 2 0 0 0 5 0 0 0 7 0 0 0 0 0 0 0 4 5 7 0 0 0 0 0 1 0 0 0 3 0 0 0 1 0 0 0 0 6 8 0 0 8 5 0 0 0 1 0 0 9 0 0 0 0 4 0 0");
-            
+            Console.WriteLine("Voer een sudoku in het volgende format in: \" (1,1) (1,2) (1,3) ... (9, 9)\"");
+            Console.WriteLine("Bijvoorbeeld zo:\" 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0\"");
+            string sudoku = Console.ReadLine();
+            Console.WriteLine("Voer een van de volgende methodes in: CBT (Chronological BackTracking), FC (Forward Checking), FCMCV (Forward Checking met Most Constrained Variable)");
+            string methode = Console.ReadLine();
+            SudokuSolver solver = new SudokuSolver();
+            solver.Solve(new Sudoku(sudoku), methode);
             // Het onderstaande stuk code is gebruikt om data te verzamelen
-            bool test = true;
+            bool test = false;
             if (test) 
             {
                 string[] sudokus = { " 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0",
@@ -23,12 +28,12 @@ namespace CBT_sudoku
                 " 0 2 0 8 1 0 7 4 0 7 0 0 0 0 3 1 0 0 0 9 0 0 0 2 8 0 5 0 0 9 0 4 0 0 8 7 4 0 0 2 0 8 0 0 3 1 6 0 0 3 0 2 0 0 3 0 2 7 0 0 0 6 0 0 0 5 6 0 0 0 0 8 0 7 6 0 5 1 0 9 0" };
                 string[] methodes = { "CBT", "FC", "FCMCV" };
                 SudokuSolver testsolver = new SudokuSolver();
-                for (int i = 0; i < sudokus.Length; i++) 
+                for (int i = 0; i < methodes.Length; i++) 
                 {
-                    for (int j = 0 ; j < methodes.Length; j++)  
+                    for (int j = 0 ; j < sudokus.Length; j++)  
                     {
-                        Console.WriteLine($"Sudoku {i} methode {methodes[j]}");
-                        testsolver.Solve(new Sudoku(sudokus[i]), methodes[j]);
+                        Console.WriteLine($"Sudoku {j} methode {methodes[i]}");
+                        testsolver.Solve(new Sudoku(sudokus[j]), methodes[i]);
                     }
                 }
             }
@@ -69,7 +74,7 @@ namespace CBT_sudoku
                 // Print het resulaat
                 if (oplosbaar)
                 {
-                    //Console.WriteLine(sudoku);
+                    Console.WriteLine(sudoku);
                     Console.WriteLine($"Opgelost in {timer.ElapsedMilliseconds} ms");
                 }
                 else
