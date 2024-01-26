@@ -10,41 +10,44 @@ namespace CBT_sudoku
     {
         static void Main(string[] args)
         {
-            Sudoku sudoku = new Sudoku(" 8 0 0 0 0 0 0 0 0 0 0 3 6 0 0 0 0 0 0 7 0 0 9 0 2 0 0 0 5 0 0 0 7 0 0 0 0 0 0 0 4 5 7 0 0 0 0 0 1 0 0 0 3 0 0 0 1 0 0 0 0 6 8 0 0 8 5 0 0 0 1 0 0 9 0 0 0 0 4 0 0");
-            //Sudoku sudoku = new Sudoku(" 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0");
-            Console.WriteLine(sudoku);
+            Console.WriteLine("Voer een sudoku in het volgende format in: \" (1,1) (1,2) (1,3) ... (9, 9)\"");
+            Console.WriteLine("Bijvoorbeeld zo:\" 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0\"");
+            string sudoku = Console.ReadLine();
+            Console.WriteLine("Voer een van de volgende methodes in: CBT (Chronological BackTracking), FC (Forward Checking), FCMCV (Forward Checking met Most Constrained Variable)");
+            string methode = Console.ReadLine();
             SudokuSolver solver = new SudokuSolver();
-            solver.Solve("FC", sudoku);
+            solver.Solve(new Sudoku(sudoku), methode);
+            // Het onderstaande stuk code is gebruikt om data te verzamelen
+            bool test = false;
+            if (test) 
+            {
+                string[] sudokus = { " 0 0 3 0 2 0 6 0 0 9 0 0 3 0 5 0 0 1 0 0 1 8 0 6 4 0 0 0 0 8 1 0 2 9 0 0 7 0 0 0 0 0 0 0 8 0 0 6 7 0 8 2 0 0 0 0 2 6 0 9 5 0 0 8 0 0 2 0 3 0 0 9 0 0 5 0 1 0 3 0 0",
+                " 2 0 0 0 8 0 3 0 0 0 6 0 0 7 0 0 8 4 0 3 0 5 0 0 2 0 9 0 0 0 1 0 5 4 0 8 0 0 0 0 0 0 0 0 0 4 0 2 7 0 6 0 0 0 3 0 1 0 0 7 0 4 0 7 2 0 0 4 0 0 6 0 0 0 4 0 1 0 0 0 3",
+                " 0 0 0 0 0 0 9 0 7 0 0 0 4 2 0 1 8 0 0 0 0 7 0 5 0 2 6 1 0 0 9 0 4 0 0 0 0 5 0 0 0 0 0 4 0 0 0 0 5 0 7 0 0 9 9 2 0 1 0 8 0 0 0 0 3 4 0 5 9 0 0 0 5 0 7 0 0 0 0 0 0",
+                " 0 3 0 0 5 0 0 4 0 0 0 8 0 1 0 5 0 0 4 6 0 0 0 0 0 1 2 0 7 0 5 0 2 0 8 0 0 0 0 6 0 3 0 0 0 0 4 0 1 0 9 0 3 0 2 5 0 0 0 0 0 9 8 0 0 1 0 2 0 6 0 0 0 8 0 0 6 0 0 2 0",
+                " 0 2 0 8 1 0 7 4 0 7 0 0 0 0 3 1 0 0 0 9 0 0 0 2 8 0 5 0 0 9 0 4 0 0 8 7 4 0 0 2 0 8 0 0 3 1 6 0 0 3 0 2 0 0 3 0 2 7 0 0 0 6 0 0 0 5 6 0 0 0 0 8 0 7 6 0 5 1 0 9 0" };
+                string[] methodes = { "CBT", "FC", "FCMCV" };
+                SudokuSolver testsolver = new SudokuSolver();
+                for (int i = 0; i < methodes.Length; i++) 
+                {
+                    for (int j = 0 ; j < sudokus.Length; j++)  
+                    {
+                        Console.WriteLine($"Sudoku {j} methode {methodes[i]}");
+                        testsolver.Solve(new Sudoku(sudokus[j]), methodes[i]);
+                    }
+                }
+            }
+            
         }
     }
 
     class SudokuSolver
     {
-        static bool debug = true;
-        static void p(string s) { if (debug) Console.WriteLine(s); }
-        static void pd(bool[,,] domein, int x) 
-        {
-            if (debug)
-            {
-                string res = "";
-                for (int yi = 0; yi < 9; yi++)
-                {
-                    for (int xi = 0; xi < 9; xi++)
-                    {
-                        res += $"  {xi},{yi}: ";
-                        for (int i = 0; i < 9; i++)
-                        {
-                            if (domein[xi, yi, i]) res += $"{i + 1}";
-                        }
-                    }
-                    res += "\n";
-                }
-                p(res);
-            }
-        }
-        public void Solve(string methode, Sudoku sudoku)
+        static int acties;
+        public void Solve(Sudoku sudoku, string methode)
         // Stuurt de oplossingsalgoritmes aan
         {
+            acties = 0;
             // Check of de doorgevoerde methode geldig is
             if (methode != "CBT" && methode != "FC" && methode != "FCMCV") Console.WriteLine("Voer een geldige methode in");
             // Als hij geldig is, los de sudoku op met de juiste methode
@@ -65,7 +68,7 @@ namespace CBT_sudoku
                         break;
 
                     case "FCMCV":
-                        oplosbaar = false;
+                        oplosbaar = ForwardCheckMCVSolve(sudoku);
                         break;
                 }
 
@@ -75,6 +78,7 @@ namespace CBT_sudoku
                 {
                     Console.WriteLine(sudoku);
                     Console.WriteLine($"Opgelost in {timer.ElapsedMilliseconds} ms");
+                    Console.WriteLine($"Acties: {acties}");
                 }
                 else
                 {
@@ -105,21 +109,22 @@ namespace CBT_sudoku
             }
 
             // Als het vakje vast is hoeven we hem niet te checken
-            if (sudoku.squares[x, y] != 0) return ChronologicalBackTrack(sudoku, x + 1, y);
+            if (sudoku.vakjes[x, y] != 0) return ChronologicalBackTrack(sudoku, x + 1, y);
 
             // Check voor alle getallen 1-9 of het getal legaal is in het vakje
             for (int getal = 1; getal < 10; getal++)
             {
-                if (IsLegaal(sudoku, getal, x, y))
+                if (sudoku.IsLegaal(getal, x, y))
                 {
                     // Als het getal legaal is vullen we hem in en gaan we verder met zoeken
-                    sudoku.squares[x, y] = getal;
+                    sudoku.vakjes[x, y] = getal;
+                    acties++;
                     if (ChronologicalBackTrack(sudoku, x + 1, y)) return true; // We zijn klaar dus return true
                 }
             }
 
             // Geen oplossing in deze tak: zet vakje weer op 0 en return false (backtrack)
-            sudoku.squares[x, y] = 0;
+            sudoku.vakjes[x, y] = 0;
             return false;
         }
         
@@ -128,54 +133,119 @@ namespace CBT_sudoku
         // Stuurt ForwardChecking aan
         {
             // We moeten per vakje het domein bijhouden
-            bool[,,] domein = Domein(sudoku);
+            bool[,,] domein = GetDomein(sudoku);
 
             // Begin recurie
             return ForwardCheck(sudoku, domein, 0, 0);
         }
 
         static private bool ForwardCheck(Sudoku sudoku, bool[,,] domein, int x, int y)
-        // Recursive part of ForwardChecking
+        // Recursief gedeelte van ForwardChecking
         {
-            // Check whether we've reached the end of the row
+            // Check of we aan het einde van de rij zijn
             if (x == 9)
             {
-                // Check whether we are at the last row (if we are we've found a solution)
+                // Check of we ook bij de laatste kolom zijn (dan zijn we klaar)
                 if (y == 8) return true;
 
-                // Move to next row
+                // Ga naar volgende rij
                 y++;
                 x = 0;
             }
-            // If the square is already filled we skip it
-            if (sudoku.squares[x, y] != 0) return ForwardCheck(sudoku, domein, x + 1, y);
+            // Als het vakje al ingevuld is skippen we hem
+            if (sudoku.vakjes[x, y] != 0) return ForwardCheck(sudoku, domein, x + 1, y);
 
             bool[,,] domein_kopie = (bool[,,])domein.Clone();
 
-            // Iterate over domain of square x,y
-            for (int number = 0; number < 9; number++)
+            // Itereer over domein van vakje x,y
+            for (int getal = 0; getal < 9; getal++)
             {
-                if (domein[x, y, number])
+                if (domein[x, y, getal])
                 {
-                    // Put number in sudoku
-                    sudoku.squares[x, y] = number + 1;
-                    // Pass through updated domain
-                    if (ForwardCheck(sudoku, UpdateDomain(sudoku, domein, number, x, y), x + 1, y)) return true;
+                    // Vul getal in
+                    sudoku.vakjes[x, y] = getal + 1;
+                    acties++;
+                    // Update domein
+                    domein = UpdateDomain(sudoku, domein, getal, x, y);
+                    // Ga verder in recursie
+                    if (ForwardCheck(sudoku, domein, x + 1, y)) return true;
+                    // Dit getal heeft geen oplossing opgeleverd: zet domein weer terug naar kopie zodat een nieuw getal geprobeerd kan worden
                     domein = (bool[,,])domein_kopie.Clone();
                 }
             }
-            // No solution found: reset square
-            sudoku.squares[x, y] = 0;
+            // Dit vakje heeft geen oplossing opgeleverd: zet het weer op 0 en ga 'terug' in recursie
+            sudoku.vakjes[x, y] = 0;
             return false;
         }
 
-        static private bool[,,] UpdateDomain(Sudoku sudoku, bool[,,] domain, int number, int x, int y)
-        // Removes number from domains of squares in the same row, column and 3x3 square as the square at x,y
+        static private bool ForwardCheckMCVSolve(Sudoku sudoku)
+        // Stuurt ForwardCheckMCV aan
+        {
+            // Tel ingevulde vakjes
+            int ingevuld = 0;
+            for (int x = 0; x< 9; x++)
+            {
+                for (int y = 0; y < 9; y++)
+                {
+                    if (sudoku.vakjes[x, y] != 0) ingevuld++;
+                }
+            }
+
+            // Get domein en volgorde en begin recursie
+            bool[,,] domein = GetDomein(sudoku);
+            Tuple<int, int>[] volgorde = UpdateVolgorde(domein);
+            return ForwardCheckMCV(sudoku, domein, volgorde, ingevuld);
+        }
+
+        static private bool ForwardCheckMCV(Sudoku sudoku, bool[,,] domein, Tuple<int, int>[] volgorde, int ingevuld)
+        // Recursief gedeelte van ForwardCheckMCV
+        {
+            // Check of we klaar zijn
+            if (ingevuld == 81) return true;
+            // Maak kopie van domein en volgorde 
+            bool[,,] domein_kopie = (bool[,,])domein.Clone();
+            Tuple<int, int>[] volgorde_kopie = (Tuple<int, int>[])volgorde.Clone();
+
+            // Ga op volgorde langs de coordinaten (most constrained eerst)
+            for (int i = 0; i < 81; i++)
+            {
+                int x = volgorde[i].Item1;
+                int y = volgorde[i].Item2;
+                if (sudoku.vakjes[x, y] != 0) continue;
+                // Ga langs het domein van vakje x,y
+                for (int getal = 0; getal < 9; getal++)
+                {
+                    if (domein[x, y, getal])
+                    {
+                        // Als een getal in het domein zit zetten we hem in de sudoku
+                        sudoku.vakjes[x, y] = getal + 1;
+                        acties++;
+                        domein = UpdateDomain(sudoku, domein, getal, x, y); // Update daarna domein
+                        if (!LeegDomein(domein)) // Alleen als het invullen van het getal geen leeg domein heeft opgeleverd kunnen we verder met recursie
+                        {
+                            volgorde = UpdateVolgorde(domein); // Update volgorde
+                            if (ForwardCheckMCV(sudoku, domein, volgorde, ingevuld + 1)) return true; // Ga verder in recursie met actuele waardes
+                            volgorde = (Tuple<int, int>[])volgorde_kopie.Clone();
+                            // Dit getal heeft geen oplossing opgeleverd: Zet volgorde weer terug naar kopie 
+                        }
+                        // Dit getal heeft geen oplossing opgeleverd: zet domein weer terug naar kopie zodat een nieuw getal geprobeerd kan worden
+                        domein = (bool[,,])domein_kopie.Clone();
+                        sudoku.vakjes[x, y] = 0;
+                    }                    
+                }
+            }
+            // Geen oplossing in deze tak: ga 'terug' in recursie 
+            return false;
+        }
+
+        static private bool[,,] UpdateDomain(Sudoku sudoku, bool[,,] domein, int getal, int x, int y)
+        // Verwijdert waade getal uit domein van vakjes in dezelfde rij, kolom en blok als vakje x,y 
+        // Vult domein van vakje x,y (maakt alleen uit dat het niet leeg is)
         {
             for (int i = 0; i < 9; i++)
             {
-                if (sudoku.squares[x, i] == 0) domain[x, i, number] = false; // Column
-                if (sudoku.squares[i, y] == 0) domain[i, y, number] = false; // Row
+                if (sudoku.vakjes[x, i] == 0) domein[x, i, getal] = false; // Column
+                if (sudoku.vakjes[i, y] == 0) domein[i, y, getal] = false; // Row
             }
 
             // 3x3 square
@@ -186,57 +256,120 @@ namespace CBT_sudoku
             {
                 for (int dy = 0; dy < 3; dy++)
                 {
-                    if (sudoku.squares[square_x + dx, square_y + dy] == 0) domain[square_x + dx, square_y + dy, number] = false;
+                    if (sudoku.vakjes[square_x + dx, square_y + dy] == 0) domein[square_x + dx, square_y + dy, getal] = false;
                 }
             }
 
-            return domain;
+            for (int i = 0; i < 9; i++)
+            {
+                domein[x, y, i] = true; // Vakje x,y
+            }
+
+            return domein;
         }
 
-        static private bool[,,] Domein(Sudoku sudoku)
+        static private Tuple<int, int>[] UpdateVolgorde(bool[,,] domein)
+        // Returnt een array van coordinaten op oplopende volgorde van domeingrootte
+        // domeingrootte van 0 wordt hierbij als laatste gezet
+        {
+            // De lijst met coordinaten die we zullen returnen
+            Tuple<int, int>[] res = new Tuple<int, int>[81];
+
+            // Creëer 1 dimensionaal array van 3 waardes: (aantal keer true, x, y)
+            Tuple<int, Tuple<int, int>>[] volgorde = new Tuple<int, Tuple<int, int>>[81];
+            for (int x = 0; x < 9; x++)
+            {
+                for (int y = 0; y < 9; y++)
+                {
+                    int count = 0;
+                    for (int k = 0; k < 9; k++) if (domein[x, y, k]) count++; // Tel aantal keer true
+                    if (count == 0) count = 10; // Als het domein leeg is willen we dat deze aan het eind van de volgorde komt, door hem op 10 te zetten gebeurt dit
+                    volgorde[x * 9 + y] = new Tuple<int, Tuple<int, int>>(count, new Tuple<int, int>(x, y)); // Voeg toe aan array op de juiste plek
+                }
+            }
+
+
+            // Selection Sort op domeingrootte
+            for (int i = 0; i < 81; i++)
+            {
+                int min_index = i;
+
+                for (int j = i + 1; j < 81; j++)
+                {
+                    if (volgorde[j].Item1 < volgorde[min_index].Item1) // Check dat waarde niet nul is
+                    {
+                        //p($"{volgorde[j].Item1} < {volgorde[i].Item1}, min: ({volgorde[i].Item2.Item1}, {volgorde[i].Item2.Item2})");
+                        min_index = j;
+                    }
+                }
+                // Voeg coordinaat toe aan array
+                res[i] = volgorde[min_index].Item2;
+                // Swap waardes
+                Tuple<int, Tuple<int, int>> temp = volgorde[i];
+                volgorde[i] = volgorde[min_index];
+                volgorde[min_index] = temp;
+            }       
+            return res;
+        }
+
+        static private bool LeegDomein(bool[,,] domein)
+        // Checkt of er een leeg domein is
+        {
+            // Itereer over domeinen
+            for (int x = 0; x < 9; x++)
+            {
+                for (int y = 0; y < 9; y++)
+                {
+                    bool leeg = true;
+                    for (int z = 0; z < 9; z++) if (domein[x, y, z]) leeg = false;
+                    if (leeg) return true; // Er is een leeg domein
+                }
+            }
+            return false;
+        }
+
+        static private bool[,,] GetDomein(Sudoku sudoku)
+        // Berekent alle domeinen van de vakjes van een sudoku en slaat ze op in een array
         {
             bool[,,] domein = new bool[9, 9, 9];
             for (int x = 0; x < 9; x++)
             {
                 for (int y = 0; y < 9; y++)
                 {
-                    if (sudoku.squares[x, y] == 0)
+                    if (sudoku.vakjes[x, y] == 0)
                     {
                         // Ga alle getallen 1-9 langs en sla legaliteit op in array
                         for (int getal = 1; getal < 10; getal++)
                         {
-                            domein[x, y, getal - 1] = IsLegaal(sudoku, getal, x, y);
+                            domein[x, y, getal - 1] = sudoku.IsLegaal(getal, x, y);
                         }
-                    }
+                    } 
+                    else
+                    {
+                        // Als het vakje al vol is vullen we het domein (maakt alleen uit dat hij niet leeg is voor MCV)
+                        for (int i = 0; i < 9; i++) domein[x, y, i] = true;
+                    } 
                 }
             }
             return domein;   
-        }
-
-
-        static private bool IsLegaal(Sudoku sudoku, int getal, int x, int y)
-        // Checkt of getal in vakje x,y van sudoku legaal zou zijn
-        {
-            // Check rij, kolom en 3x3 blok van het vakje: constraints
-            return !(sudoku.Rij(y).Contains(getal) || sudoku.Kolom(x).Contains(getal) || sudoku.Blok(x, y).Contains(getal));
         }
     }
 
     class Sudoku
     {
         // Slaat een 9x9 array van getallen op
-        public int[,] squares;
+        public int[,] vakjes;
 
         public Sudoku(string input)
         {
             // Parseert inputstring tot een sudoku
-            squares = new int[9, 9];
+            vakjes = new int[9, 9];
             string[] s = input.Split(' ');
             for (int i = 0; i < s.Length - 1; i++) // Eerste element is " ", vandaar - 1
             {
                 int x = i % 9;
                 int y = i / 9;
-                squares[x, y] = int.Parse(s[i + 1]); // en hier + 1
+                vakjes[x, y] = int.Parse(s[i + 1]); // en hier + 1
             }
         }
 
@@ -246,7 +379,7 @@ namespace CBT_sudoku
             int[] res = new int[9];
             for (int i = 0; i < 9; i++)
             {
-                res[i] = squares[i, y];
+                res[i] = vakjes[i, y];
             }
             return res;
         }
@@ -257,7 +390,7 @@ namespace CBT_sudoku
             int[] res = new int[9];
             for (int i = 0; i < 9; i++)
             {
-                res[i] = squares[x, i];
+                res[i] = vakjes[x, i];
             }
             return res;
         }
@@ -274,10 +407,17 @@ namespace CBT_sudoku
             {
                 for (int dy = 0; dy < 3; dy++)
                 {
-                    res[dx * 3 + dy] = squares[blok_x + dx, blok_y + dy];
+                    res[dx * 3 + dy] = vakjes[blok_x + dx, blok_y + dy];
                 }
             }
             return res;
+        }
+
+        public bool IsLegaal(int getal, int x, int y)
+        // Checkt of getal in vakje x,y van sudoku legaal zou zijn
+        {
+            // Check rij, kolom en 3x3 blok van het vakje: constraints
+            return !(Rij(y).Contains(getal) || Kolom(x).Contains(getal) || Blok(x, y).Contains(getal));
         }
 
         public override string ToString()
@@ -299,7 +439,7 @@ namespace CBT_sudoku
                         {
                             int x = (27 * i + 9 * j + 3 * k + 1 * l) % 9;
                             int y = (27 * i + 9 * j + 3 * k + 1 * l) / 9;
-                            res += squares[x, y] + " ";
+                            res += vakjes[x, y] + " ";
                         }
                         res += "|";
                     }
