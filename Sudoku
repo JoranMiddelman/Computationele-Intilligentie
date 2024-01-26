@@ -43,9 +43,11 @@ namespace CBT_sudoku
 
     class SudokuSolver
     {
+        static int acties;
         public void Solve(Sudoku sudoku, string methode)
         // Stuurt de oplossingsalgoritmes aan
         {
+            acties = 0;
             // Check of de doorgevoerde methode geldig is
             if (methode != "CBT" && methode != "FC" && methode != "FCMCV") Console.WriteLine("Voer een geldige methode in");
             // Als hij geldig is, los de sudoku op met de juiste methode
@@ -76,6 +78,7 @@ namespace CBT_sudoku
                 {
                     Console.WriteLine(sudoku);
                     Console.WriteLine($"Opgelost in {timer.ElapsedMilliseconds} ms");
+                    Console.WriteLine($"Acties: {acties}");
                 }
                 else
                 {
@@ -115,6 +118,7 @@ namespace CBT_sudoku
                 {
                     // Als het getal legaal is vullen we hem in en gaan we verder met zoeken
                     sudoku.vakjes[x, y] = getal;
+                    acties++;
                     if (ChronologicalBackTrack(sudoku, x + 1, y)) return true; // We zijn klaar dus return true
                 }
             }
@@ -160,6 +164,7 @@ namespace CBT_sudoku
                 {
                     // Vul getal in
                     sudoku.vakjes[x, y] = getal + 1;
+                    acties++;
                     // Update domein
                     domein = UpdateDomain(sudoku, domein, getal, x, y);
                     // Ga verder in recursie
@@ -214,6 +219,7 @@ namespace CBT_sudoku
                     {
                         // Als een getal in het domein zit zetten we hem in de sudoku
                         sudoku.vakjes[x, y] = getal + 1;
+                        acties++;
                         domein = UpdateDomain(sudoku, domein, getal, x, y); // Update daarna domein
                         if (!LeegDomein(domein)) // Alleen als het invullen van het getal geen leeg domein heeft opgeleverd kunnen we verder met recursie
                         {
@@ -323,6 +329,7 @@ namespace CBT_sudoku
         }
 
         static private bool[,,] GetDomein(Sudoku sudoku)
+        // Berekent alle domeinen van de vakjes van een sudoku en slaat ze op in een array
         {
             bool[,,] domein = new bool[9, 9, 9];
             for (int x = 0; x < 9; x++)
